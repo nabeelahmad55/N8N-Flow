@@ -1,0 +1,737 @@
+{
+  "name": "Whatsapp Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\n{{ $json.text }}",
+        "options": {
+          "systemMessage": "You are a WhatsApp-based food delivery assistant for BM Restaurant.\n\nYour job is to take food orders, check inventory, confirm availability, provide order status, answer FAQs, calculate totals, and guide customers politely like a real human assistant.\n\nAlways keep the tone short, friendly, and WhatsApp-like. \nUse emojis (✅, ❌, 🍴, 🚚, 💰) where needed.\nNever say \"I cannot answer\" — always provide useful guidance or suggest alternatives. Follow the rules below for every situation:\n\n1. GREETING: \nWhen the user first messages (hi, hello, salam etc.), reply:\n\n\"Welcome to MDA Restaurant 🍽️\nHow can I help you today?\n- 🛒 Place an order\n- ℹ️ FAQ / Information\n- 📦 Check order / stock\"\nKeep tone polite and friendly.\n\n2. ORDER PLACEMENT: \nAsk step by step: \nCustomer Name, Food Item, Quantity. Check the Google Sheets Inventory before confirming.\n\nIf item available → \"Your order for *[item]* (x quantity) is confirmed ✅\"\nIf item not available → \"Sorry, *[item]* is out of stock ❌. \nAvailable options: [list available items]\"\nConfirmed orders are added to the Orders Sheet with:\n\nCustomer Name\nFood Items\nQuantity\nUnit Price (from inventory)\nTotal (Quantity × Unit Price)\nOrder Date ({{$now.format('yyyy-MM-dd HH:mm:ss')}})\nStatus (Confirmed/Rejected)\nDescription (\"Order accepted (available)\" or \"Order rejected (out of stock)\"). \n\nFor multiple items, create separate rows.\n\n3. INVENTORY & STOCK:\n\nInventory Sheet contains: \nFood Name, Available Stock, Unit Price.\n \nWhen an order is placed, reduce stock automatically. If stock = 0, mark item as \"Out of Stock\".\nIf user asks \"Do you have [item]?\" check inventory and reply with availability. \nIf they ask \"show menu\" or \"what do you have\", list all available items with stock.\n\n4. BILLING & TOTAL:\nOrders Sheet automatically calculates totals with: =ARRAYFORMULA(IF(ROW(C:C)=1,\"Total (Rs.)\",IF((C:C*D:D)=0,\"\",C:C*D:D))). \nIf user asks \"total kitna paisa ho gaya hai\", sum all pending/confirmed orders for that customer and reply: \"Your total order amount is Rs. [amount] 💰\". Add delivery charges if applicable.\n\n5. DELIVERY TIME:\nDelivery estimates: \n1 km → 20–30 mins\nWithin 5 km → 30–45 mins\nBeyond 5 km → 45–60 mins\n\nIf asked, reply: \"Your order will be delivered in 30–45 minutes depending on your location 🚚\"\n\n6. FAQ ANSWERS:\n\nOpening hours → \"We are open daily 9:00 a.m – 9:00 p.m, closed Sat & Sun.\"\n\nDelivery → \"Yes, free delivery within 5km.\"\n\nRefund policy → \"Refunds are available only before preparation starts.\"\n\nPayment methods → \"We accept Cash on Delivery, JazzCash, Easypaisa, Meezan Bank Transfer.\"\n\nVegetarian food → \"Yes, we serve dal, sabzi, aloo gobi, and vegetable dishes.\"\n\nPreorder → \"Yes, you can preorder via WhatsApp or phone.\"\n\nCatering → \"Yes, catering service is available for parties and events.\"\n\nToday’s special → \"Today’s special is Chicken Biryani and Chicken Karahi.\"\n\n7. CHECK ORDER / STATUS:\nIf user asks \"check order\", ask for order ID or name.\nLook up Orders Sheet and reply with status: Confirmed / Rejected / Cancelled / Delivered.\n\nExample: \n\"Your order for Chicken Karahi is Confirmed ✅ \nStatus: Pending Delivery 🚚\"\n\n8. CANCEL ORDER:\nDo not cancel directly. \n\nReply: \n\"Sorry ❌ I cannot cancel orders directly. \nPlease call the restaurant owner at +92 1234567890 to cancel.\"\n\n9. ERROR HANDLING:\n\nIf input is unclear: \n\n\"Could you please tell me the food item and quantity? Example: 2x Chicken Biryani\"\n\nIf unrelated (jokes, songs, etc.): \n\"I’m here to help with food orders 🍴 Would you like to see today’s menu?\"\n\n10. STYLE RULES:\nAlways reply short like WhatsApp chat.\nUse emojis for clarity.\nUse *stars* for highlighting important words.\nNever send long paragraphs or formal text.\nAlways polite, friendly, and food-delivery style.\nIf something is unavailable, suggest alternatives.\n\n11. SPECIAL CASES:\nMultiple orders = multiple rows in Orders Sheet.\nRepeat customers = remember their name from earlier orders.\nOut of stock = suggest similar dish.\nCompleted order = mark Delivered.\nCancelled order = mark Cancelled and set Total = 0.\n\nWORKFLOW (n8n + Google Sheets):\n\n1. Trigger Node → WhatsApp/Webhook receives message\n\n2. AI Agent Node → Understand intent (order, FAQ, check order, stock, total)\n3. Google Sheets Nodes:\n   - Inventory lookup\n   - Insert new order\n   - Update stock\n   - Calculate totals\n4. IF Node → Check availability (stock > 0 → Confirmed, else Rejected)\n5. Return Node → Send WhatsApp reply\n\nYou must always behave like a real restaurant assistant. Always confirm, guide, or suggest something useful. Never leave a user confused.\n\n\nAlways make a natural, Humanize tone.\nRemeber: Not AI tone ok"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        176
+      ],
+      "id": "e5c9e3fe-6acc-4560-9061-e636f148c23c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        320,
+        368
+      ],
+      "id": "b3addc48-04fe-4e43-8930-b4620699fcc8",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "H53SkcHGFnH8m7Ql",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.id }}",
+        "contextWindowLength": 30
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        432
+      ],
+      "id": "df3107c6-afad-4a9a-947e-f910446bcd00",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk",
+          "mode": "list",
+          "cachedResultName": "Food Delivery System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "FAQ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        592,
+        480
+      ],
+      "id": "7cae3191-fbb0-4e20-84ee-6749442382d6",
+      "name": "Get FAQ's",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "B0qBClMtmhKl4gXg",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk",
+          "mode": "list",
+          "cachedResultName": "Food Delivery System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1409658622,
+          "mode": "list",
+          "cachedResultName": "Menu & Auto Responses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk/edit#gid=1409658622"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        720,
+        464
+      ],
+      "id": "808e7b76-5be6-4743-b1c9-65b5bc049cde",
+      "name": "Menu Detail",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "B0qBClMtmhKl4gXg",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk",
+          "mode": "list",
+          "cachedResultName": "Food Delivery System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1573486475,
+          "mode": "list",
+          "cachedResultName": "Delivery Time Detail",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk/edit#gid=1573486475"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        848,
+        432
+      ],
+      "id": "01b2df7b-d240-4ce2-806c-71358f9609f3",
+      "name": "Delivery Time Detail",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "B0qBClMtmhKl4gXg",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk",
+          "mode": "list",
+          "cachedResultName": "Food Delivery System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1459627871,
+          "mode": "list",
+          "cachedResultName": "Customer Order Detail",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk/edit#gid=1459627871"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Customer Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_Name', ``, 'string') }}",
+            "Food Items": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Food_Items', ``, 'string') }}",
+            "Quantity Order": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Quantity_Order', ``, 'string') }}",
+            "Order Date": "={{$now.format('yyyy-MM-dd HH:mm:ss')}}",
+            "Status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Status', ``, 'string') }}",
+            "Unit Price (Rs.)": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Unit_Price__Rs__', ``, 'string') }}",
+            "Total (Rs.)": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Total__Rs__', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Food Items",
+              "displayName": "Food Items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Quantity Order",
+              "displayName": "Quantity Order",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Unit Price (Rs.)",
+              "displayName": "Unit Price (Rs.)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Total (Rs.)",
+              "displayName": "Total (Rs.)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Order Date",
+              "displayName": "Order Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        976,
+        400
+      ],
+      "id": "0ccc87f4-3208-4311-9b19-a07799822381",
+      "name": "Customer Detail",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "B0qBClMtmhKl4gXg",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk",
+          "mode": "list",
+          "cachedResultName": "Food Delivery System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 568296870,
+          "mode": "list",
+          "cachedResultName": "Q/A for Payments",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YLSPJDlwu3tmF7DwIYOMUpM86rHS3AGuHxhS68PK6Yk/edit#gid=568296870"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1072,
+        352
+      ],
+      "id": "37011b25-31c0-4af8-8cd0-cc3b7a90bc3e",
+      "name": "Payment",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "B0qBClMtmhKl4gXg",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -544,
+        160
+      ],
+      "id": "5faef2e8-cdd9-4df0-9e79-d273cbe04b31",
+      "name": "WhatsApp Trigger",
+      "webhookId": "a760a38b-74f2-44e7-9841-2c8b49ac5519",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "uYbE6ljAzj7qXA7S",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "752841481251064",
+        "recipientPhoneNumber": "+92 301 7175262",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        896,
+        176
+      ],
+      "id": "5d5a7a16-303a-4cb5-a060-9f758db82f4d",
+      "name": "Send message",
+      "webhookId": "060f362e-4d47-49c3-8996-27c9ac3938bf",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "1VGII5hWFIXNvU3R",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.messages[0].audio.voice }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "9037bfbe-9538-4d61-9371-ba5aa63e9238"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7d0f08e0-cd1e-44f4-8f5b-09082e8161c3",
+                    "leftValue": "={{ $json.messages[0].type }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Chat"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -336,
+        160
+      ],
+      "id": "e662a39d-13b8-4dca-abc2-e54b43725fca",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "operation": "mediaUrlGet",
+        "mediaGetId": "={{ $json.messages[0].audio.id }}"
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -32
+      ],
+      "id": "0c591874-e56f-4663-8f99-fbd5ac0d1379",
+      "name": "Audio Download",
+      "webhookId": "779e0e27-d75e-4a53-8d0b-3e727cdb9f25",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "1VGII5hWFIXNvU3R",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        64,
+        -32
+      ],
+      "id": "80bf7f6e-199f-469b-9f4b-febf95ff3b42",
+      "name": "Convertor",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "PJouofEdMTBrnb2h",
+          "name": "Header Auth account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-1.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-1.5-flash"
+        },
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -32
+      ],
+      "id": "3468b00b-4719-4659-a613-1609374ac7cb",
+      "name": "Translator",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "H53SkcHGFnH8m7Ql",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "43a1171e-b249-4827-8989-58145f758788",
+              "name": "text",
+              "value": "={{ $json.messages[0].text.body }}",
+              "type": "string"
+            },
+            {
+              "id": "f746040b-34d0-434f-a99f-c15a8f0046d0",
+              "name": "id",
+              "value": "={{ $json.messages[0].id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -48,
+        176
+      ],
+      "id": "dbb1a8de-106c-4a0b-be6f-17964aa123c1",
+      "name": "Rename"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "31d96ba1-7271-4158-98a5-ee5eb546cb21",
+              "name": "text",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "04d0b4eb-3b15-4edd-b0bc-3e8e5cebb291",
+              "name": "id",
+              "value": "={{ $('Audio Download').item.json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        -32
+      ],
+      "id": "62e15be1-25c7-4e9b-a105-22258b181c36",
+      "name": "Rename1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get FAQ's": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Menu Detail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delivery Time Detail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Detail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Audio Download",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rename",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audio Download": {
+      "main": [
+        [
+          {
+            "node": "Convertor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convertor": {
+      "main": [
+        [
+          {
+            "node": "Translator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Translator": {
+      "main": [
+        [
+          {
+            "node": "Rename1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "05c38cf4-ba4f-4be6-a769-fd8197b9dfa6",
+  "meta": {
+    "instanceId": "424bd5bafb623cfe45fa852cd88d1d0008e996fcab2c719d97be4b3d95864c39"
+  },
+  "id": "7J7Qf5huDrMlOSRw",
+  "tags": []
+}

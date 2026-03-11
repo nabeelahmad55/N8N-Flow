@@ -1,0 +1,407 @@
+{
+  "name": "Gmail Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Get Work",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "placeholder": "Enter your name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "placeholder": "Enter your email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What is your time frame?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "1-2 month"
+                  },
+                  {
+                    "option": "2-4 month"
+                  },
+                  {
+                    "option": "4-8 month"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What's your project budget?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "$500 - $999"
+                  },
+                  {
+                    "option": "$999 - $1500"
+                  },
+                  {
+                    "option": "$2000 - $4999"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -576,
+        -80
+      ],
+      "id": "33e63113-5971-4e1f-a0b3-350735fcbd08",
+      "name": "On form submission",
+      "webhookId": "dc9910eb-3d16-450d-9bc6-c84893bf729c"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json['What\\'s your project budget?'] }}",
+                    "rightValue": "$500 - $999",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "aa2380cf-2f65-4313-9488-97e951c50f14"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Low Budget"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "52ea9456-1936-442d-a710-0814bcf27f6b",
+                    "leftValue": "={{ $json['What\\'s your project budget?'] }}",
+                    "rightValue": "$999 - $1500",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Medium Budget"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5d3ba4d5-6f81-42a2-a415-8fc2abc23402",
+                    "leftValue": "={{ $json['What\\'s your project budget?'] }}",
+                    "rightValue": "$2000 - $4999",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "High Budget"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -384,
+        -96
+      ],
+      "id": "450b1a88-fbf6-4fe4-a789-c13fa7773984",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "bilal.moazzam.ibex@gmail.com",
+        "subject": "Client Work",
+        "emailType": "text",
+        "message": "=Hi there Bilal you got a new lead!\n\nTheir name is: {{ $json.Name }}\n\nHere is the project they want built:{{ $json['What is your time frame?'] }}\n\nThey want this project built in:Their project budget is:{{ $json['What\\'s your project budget?'] }}\n\nThey submitted this form at: {{ $json.submittedAt }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        -272
+      ],
+      "id": "6c4a4d4c-0b2f-42af-84b2-25875d34c3ee",
+      "name": "Send a message",
+      "webhookId": "d94e050e-0fc0-4eee-a91d-f9095b38bfc1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EKxcPmHolt5kCZOt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "bilal.moazzam.ibex@gmail.com",
+        "subject": "Client Work",
+        "emailType": "text",
+        "message": "=Hi there Bilal you got a new lead!\n\nTheir name is: {{ $json.Name }}\n\nHere is the project they want built:{{ $json['What is your time frame?'] }}\n\nThey want this project built in:Their project budget is:{{ $json['What\\'s your project budget?'] }}\n\nThey submitted this form at: {{ $json.submittedAt }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        -80
+      ],
+      "id": "cf1d1f7d-3a57-4c9f-b0c6-441066bf84ef",
+      "name": "Send a message1",
+      "webhookId": "d94e050e-0fc0-4eee-a91d-f9095b38bfc1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EKxcPmHolt5kCZOt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "bilal.moazzam.ibex@gmail.com",
+        "subject": "Client Work",
+        "emailType": "text",
+        "message": "=Hi there Bilal you got a new lead!\n\nTheir name is: {{ $json.Name }}\n\nHere is the project they want built:{{ $json['What is your time frame?'] }}\n\nThey want this project built in:Their project budget is:{{ $json['What\\'s your project budget?'] }}\n\nThey submitted this form at: {{ $json.submittedAt }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -80,
+        112
+      ],
+      "id": "987197d4-0cda-4be4-9dac-e5e736243e15",
+      "name": "Send a message2",
+      "webhookId": "d94e050e-0fc0-4eee-a91d-f9095b38bfc1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EKxcPmHolt5kCZOt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_2587297113226533483"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        128,
+        -272
+      ],
+      "id": "c8b2e5a4-0ff2-47b8-9a59-bcbab422c70b",
+      "name": "Add label to message",
+      "webhookId": "a316a03c-f67a-4c36-ae1b-ea607106f37f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EKxcPmHolt5kCZOt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_3723042970173057145"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        144,
+        -80
+      ],
+      "id": "dc946800-e9e9-484b-b6e3-97144cfadb81",
+      "name": "Add label to message1",
+      "webhookId": "a316a03c-f67a-4c36-ae1b-ea607106f37f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EKxcPmHolt5kCZOt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_3658322969890535754"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        144,
+        112
+      ],
+      "id": "910bf1ea-8ef3-43e6-97d3-7e404b0289fb",
+      "name": "Add label to message2",
+      "webhookId": "a316a03c-f67a-4c36-ae1b-ea607106f37f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EKxcPmHolt5kCZOt",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Add label to message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "Add label to message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2092ac18-597c-4a0a-821c-dc10ec517715",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "424bd5bafb623cfe45fa852cd88d1d0008e996fcab2c719d97be4b3d95864c39"
+  },
+  "id": "W07Mi3Lflg8K2mIS",
+  "tags": [
+    {
+      "createdAt": "2025-09-02T10:00:57.851Z",
+      "updatedAt": "2025-09-02T10:00:57.851Z",
+      "id": "BN01wQSXmbRmZWSq",
+      "name": "form"
+    },
+    {
+      "createdAt": "2025-09-02T07:35:01.885Z",
+      "updatedAt": "2025-09-02T07:35:01.885Z",
+      "id": "KC8TmRFhyU1irnpd",
+      "name": "Gmail"
+    },
+    {
+      "createdAt": "2025-09-02T10:00:51.870Z",
+      "updatedAt": "2025-09-02T10:00:51.870Z",
+      "id": "u3k7pY6uIChPYVVY",
+      "name": "Swiitch"
+    }
+  ]
+}

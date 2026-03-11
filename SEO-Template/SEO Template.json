@@ -1,0 +1,446 @@
+{
+  "name": "SEO Template",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1984,
+        800
+      ],
+      "id": "c0a6229b-458f-4a75-b886-a1b775077880",
+      "name": "When chat message received",
+      "webhookId": "34054db0-37ee-4d4d-b5c1-beac07018bfd"
+    },
+    {
+      "parameters": {
+        "url": "https://google-search74.p.rapidapi.com/?",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.chatInput }}"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            },
+            {
+              "name": "pageSize",
+              "value": "1"
+            },
+            {
+              "name": "results",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rapidapi-host",
+              "value": "google-search74.p.rapidapi.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1776,
+        800
+      ],
+      "id": "375b4047-d3d0-4011-b3b0-2799676178ae",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tK42nmebTrVpohqO",
+          "name": "Header Auth account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $json.results;\n\nconst extractedUrls = results.map(result=>({\n  url:result.url,\n  title:result.title,\n  description:result.description\n}))\n\nreturn extractedUrls;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1568,
+        800
+      ],
+      "id": "3c6b8a98-552e-44ec-a95c-dbabf0406d6f",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1360,
+        800
+      ],
+      "id": "0e71a727-0edd-4dcf-9766-fc82b70fecae",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1104,
+        816
+      ],
+      "id": "59653cfd-75f7-401a-a029-0453edfb8ce1",
+      "name": "Fetch data from url"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1072,
+        576
+      ],
+      "id": "a3946e5e-7013-484f-880e-f7bd72c9f8a6",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const html =$json.data || \"\";\n\nif(!html){\n  throw new Error(\"No HTML content provide in JSOn data. Ensure input contain valid HTML.\")\n}\n\nfunction extractAndCleanContent(html, tag){\n  const regex=new RegExp(`<${tag}[^>]*>(.*?)<\\/${tag}>`, \"gis\");\n  const matchs =[...html.matchAll(regex)];\n\n  return matchs.map(match =>match[1].replace(/<[^>]*>/g,\"\").trim())\n}\n\nconst bodyText = [\n  ...extractAndCleanContent(html,\"p\"),\n  ...extractAndCleanContent(html,\"span\")\n];\n\nreturn{\n  bodyText\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        592
+      ],
+      "id": "530f9e0d-e1b7-40d3-9ebf-090cd504d0c0",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.map(item => {\n  let text = String(item.json.bodyText || \"\");\n\n  // Remove <script>, <style>, and CSS blocks\n  text = text.replace(/<script[\\s\\S]*?<\\/script>/gi, \"\")\n             .replace(/<style[\\s\\S]*?<\\/style>/gi, \"\")\n             .replace(/\\.[a-zA-Z0-9_-]+\\s*\\{[^}]*\\}/g, \"\"); \n\n  // Remove all HTML tags\n  text = text.replace(/<[^>]*>/g, \"\");\n\n  // Remove leftover CSS/JS inline blocks like @media, @supports\n  text = text.replace(/@media[\\s\\S]*?\\{[\\s\\S]*?\\}/gi, \"\")\n             .replace(/@supports[\\s\\S]*?\\{[\\s\\S]*?\\}/gi, \"\");\n\n  // Decode common HTML entities\n  text = text.replace(/&nbsp;/g, \" \")\n             .replace(/&amp;/g, \"&\")\n             .replace(/&lt;/g, \"<\")\n             .replace(/&gt;/g, \">\");\n\n  // Remove excessive whitespace, newlines, commas\n  text = text.replace(/\\s{2,}/g, \" \")\n             .replace(/ ,/g, \",\")\n             .replace(/\\n{2,}/g, \"\\n\");\n\n  return text.trim();\n});\n\nconst separator = \"\\n\\n--- Page Break ---\\n\\n\";\n\nconst combinedBodyText = results.filter(Boolean).join(separator);\n\nreturn [{ json: { combinedBodyText } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -816,
+        432
+      ],
+      "id": "ad92b63d-cd5e-474f-8960-587541190dcd",
+      "name": "Concatenate Body Text Code"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "GPT-5"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an assistant that extracts and summarizes content.\n\nRules:\n1. Input comes from: {{ $json.combinedBodyText }}\n2. First 100 words: clearly explain the meaning and purpose of the content.\n3. The rest of the output: extract and rewrite the main data in a clean, human-like, SEO-friendly style.\n4. Remove unnecessary boilerplate, code, or irrelevant parts (HTML, CSS, JS).\n5. Maximum total length: 1000 words.\n6. Keep the language natural, readable, and professional.\n7. Do not include AI disclaimers, apologies, or notes about being a model.\n8. Final output should be plain text only.\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -384,
+        432
+      ],
+      "id": "f0ee55c6-c6c5-451f-ae89-e3cedad55db0",
+      "name": "Data Extract and summarize",
+      "credentials": {
+        "openAiApi": {
+          "id": "tekJoCeXUehb9hPv",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional SEO content creator and editor.\n\nRules:\n1. Input: {{ $json.message.content }}\n2. Rewrite and polish the content to make it more natural, clear, and engaging.\n3. Improve grammar, flow, and readability while keeping the original meaning.\n4. Structure the content with logical flow: introduction, main points, conclusion.\n5. Optimize for SEO by using clear headings, valuable keywords, and concise sentences.\n6. Keep it human-like, not robotic: conversational tone but professional.\n7. Length should not exceed 1000 words.\n8. Remove any repetitive, irrelevant, or filler sentences.\n9. Do not include system notes, disclaimers, or AI mentions.\n10. Final output must be clean, ready-to-publish text.\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -544,
+        752
+      ],
+      "id": "b8a19e72-9798-4b2a-ade2-3255b3844cf3",
+      "name": "SEO Content",
+      "credentials": {
+        "openAiApi": {
+          "id": "lrGQUQxgSRoGAqle",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a professional human content writer. \nYour task is to rewrite and format the content so that it reads naturally, looks human-made, and is ready to publish.\n\nInput: {{ $json.message.content }}\n\nRules for Output:\n1. The very first heading must be <h1> ... </h1>.\n2. Use <h2> ... </h2> for major sections and <h3> ... </h3> for subsections.\n3. Use <p> ... </p> for paragraphs.\n4. Important keywords and phrases should be wrapped in <b> ... </b>.\n5. Use <i> ... </i> for emphasis where needed (e.g., notes, important remarks).\n6. If information is best shown as a list, use proper lists:\n   - Ordered lists: <ol><li> ... </li></ol>\n   - Unordered lists: <ul><li> ... </li></ul>\n7. Do not use Markdown symbols like ** or --. Only use clean HTML tags.\n8. Make the tone natural, smooth, and human — no robotic or AI-like wording.\n9. Ensure readability: short sentences, clear structure, professional yet conversational.\n10. Length should be up to 1000 words max.\n11. Do not include system notes, disclaimers, or anything that reveals it was written by AI.\n12. Make sure the text feels like it was written by a skilled human writer.\n\nFinal Output: Polished, structured, humanized content using only <h1>, <h2>, <h3>, <p>, <b>, <i>, <ul>, <ol>, <li>.\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -240,
+        752
+      ],
+      "id": "9bce9dbd-33da-419d-abee-4d19634d79ba",
+      "name": "Humanize AI",
+      "credentials": {
+        "openAiApi": {
+          "id": "lrGQUQxgSRoGAqle",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "263f70af-3dba-8005-9f89-ff900ffa2bbf",
+          "mode": "list",
+          "cachedResultName": "Seo ka liya database",
+          "cachedResultUrl": "https://www.notion.so/263f70af3dba80059f89ff900ffa2bbf"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        752
+      ],
+      "id": "d880025c-c44c-4bf6-9225-ab6aa3edc816",
+      "name": "Create a database page1",
+      "credentials": {
+        "notionApi": {
+          "id": "XDg8zyTrTvn0JBYe",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let text = items[0].json.combinedBodyText || \"\";\n\n// --- 1. Remove CSS, JSON, boilerplate ---\ntext = text.replace(/(\\.[a-zA-Z0-9_-]+|\\#[a-zA-Z0-9_-]+)/g, \"\"); // .className / #id\ntext = text.replace(/\\{[^}]*\\}/g, \"\"); // { ... }\ntext = text.replace(/\\[[^\\]]*\\]/g, \"\"); // [ ... ]\ntext = text.replace(/@media[^{]*\\{[^}]*\\}/g, \"\"); // media queries\ntext = text.replace(/\\s+/g, \" \").trim();\n\n// --- 2. Split into chunks (like paragraphs/sentences) ---\nlet parts = text.split(/(?<=[.!?])\\s+/);\n\n// --- 3. Keep only meaningful parts ---\nlet cleanParts = parts.filter(p => {\n  // Skip if too short\n  if (p.length < 40) return false;\n\n  // Skip if it's navigation/menu/ads\n  if (p.match(/\\b(home|login|account|menu|courses|newsletter|skip to content|join our|subscribe)\\b/i)) {\n    return false;\n  }\n\n  // Skip if contains code-like stuff\n  if (p.match(/[{};:=]/)) return false;\n\n  return true;\n});\n\n// --- 4. Recombine into clean text ---\nlet finalContent = cleanParts.join(\" \");\n\nreturn [{ json: { finalContent } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        432
+      ],
+      "id": "2c7e0390-e20f-4ea8-b782-eb3e32c90475",
+      "name": "Code2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch data from url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch data from url": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Concatenate Body Text Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Concatenate Body Text Code": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Extract and summarize": {
+      "main": [
+        [
+          {
+            "node": "SEO Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Content": {
+      "main": [
+        [
+          {
+            "node": "Humanize AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Humanize AI": {
+      "main": [
+        [
+          {
+            "node": "Create a database page1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Data Extract and summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "eb1114f5-65b7-49f0-a06e-22c8688036a2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "424bd5bafb623cfe45fa852cd88d1d0008e996fcab2c719d97be4b3d95864c39"
+  },
+  "id": "1NB5KlQCYp1pcMkt",
+  "tags": []
+}

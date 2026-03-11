@@ -1,0 +1,484 @@
+{
+  "name": "Payroll System",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "q": "Subject:Salary Notification"
+        }
+      },
+      "id": "c4dab63d-f9fd-49ec-805f-10a2ed012c37",
+      "name": "New Email Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -8864,
+        -16
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EKxcPmHolt5kCZOt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a65131fa-9cfd-449f-9207-8512f735fe54",
+              "leftValue": "={{ $json['Salary Date'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -8512,
+        -16
+      ],
+      "id": "b5f82fde-b226-40ca-8e42-17dcbaca3269",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the raw date string\nconst rawDate = $json[\"Salary Date\"] || \"\";  \n// Example: \"Date: Wed, 3 Sep 2025 17:17:05 +0500\"\n\n// Extract the day number from the string (3, 15, 31, etc.)\nconst match = rawDate.match(/\\b(\\d{1,2})\\b/);\n\nlet salaryDate = null;\nif (match) {\n  salaryDate = parseInt(match[1], 10);\n}\n\nreturn [{ salaryDate }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -8336,
+        -16
+      ],
+      "id": "a7a374fe-e2c3-4205-8ddd-78ea219aae0e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.salaryDate }}",
+                    "rightValue": 15,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lte"
+                    },
+                    "id": "88463821-f7a8-453f-a89b-4f949bc0da29"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "in 15"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a027ba85-5adf-4bb9-959c-1a850e898965",
+                    "leftValue": "={{ $json.salaryDate }}",
+                    "rightValue": 30,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lte"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "In 30"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -8176,
+        -16
+      ],
+      "id": "f2862a88-2943-4a72-9007-eb0e8d1ffb19",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\nconst year = today.getFullYear();\nconst month = today.getMonth(); // current month (0-based)\n\n// salary release = 17th of this month\nconst releaseDate = new Date(year, month, 17);\n\n// if today > 17, push it to next month’s 17\nif (today > releaseDate) {\n  releaseDate.setMonth(month + 1);\n}\n\nreturn [{ releaseDate: releaseDate.toISOString() }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -8032,
+        -112
+      ],
+      "id": "c36287c2-936f-4078-a8ec-f72bd290e052",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\nconst year = today.getFullYear();\nconst month = today.getMonth();\n\n// salary release = 2nd of next month\nconst releaseDate = new Date(year, month + 1, 2);\n\nreturn [{ releaseDate: releaseDate.toISOString() }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -8032,
+        64
+      ],
+      "id": "0a4affec-9749-4173-ba31-3c6527da8349",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webhook.site/e0db214c-3147-4905-89f3-25ba351e5c59",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"employeeId\": \"12345\",\n  \"salaryDate\": \"{{$json[\"releaseDate\"]}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -7840,
+        -112
+      ],
+      "id": "167054c5-65dd-40e3-a3d4-5cfabda460d2",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "lpnSazZuTwv7YweM",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "bilal.moazzam.ibex@gmail.com",
+        "subject": "Salary Confirmation",
+        "emailType": "text",
+        "message": "=You got your salary on: {{ $('Code1').item.json.releaseDate }} .\n\nYour Salary is: 40000 Rs.\n\nIf any issue you face contact to HR.\nthank you.",
+        "options": {
+          "ccList": "bilalmoazzam466@gmail.com",
+          "senderName": "HR"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -7632,
+        -112
+      ],
+      "id": "31fa0bd6-6d97-441b-9a9f-519825acd37b",
+      "name": "Send a message",
+      "webhookId": "43469687-d6d4-4c59-a834-629ac99368de",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EKxcPmHolt5kCZOt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webhook.site/e0db214c-3147-4905-89f3-25ba351e5c59",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"employeeId\": \"12345\",\n  \"salaryDate\": \"{{$json[\"releaseDate\"]}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -7840,
+        64
+      ],
+      "id": "1b477d14-0d8a-4b6f-9678-8ebe5c952257",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "lpnSazZuTwv7YweM",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "bilal.moazzam.ibex@gmail.com",
+        "subject": "Salary Confirmation",
+        "emailType": "text",
+        "message": "=You got your salary on: {{ $('Code2').item.json.releaseDate }} .\n\nYour Salary is: 40000 Rs.\n\nIf any issue you face contact to HR.\nthank you.",
+        "options": {
+          "ccList": "bilalmoazzam466@gmail.com",
+          "senderName": "HR"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -7632,
+        64
+      ],
+      "id": "3f4ae3b7-59f8-41f9-8e07-2195dd931bb4",
+      "name": "Send a message1",
+      "webhookId": "43469687-d6d4-4c59-a834-629ac99368de",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EKxcPmHolt5kCZOt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months",
+              "triggerAtDayOfMonth": 17,
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -8032,
+        -272
+      ],
+      "id": "a4f3ca93-37e3-42af-b531-317315a18cd7",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months",
+              "triggerAtDayOfMonth": 2,
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -8032,
+        240
+      ],
+      "id": "0d5b1f0d-3eb0-4929-be45-22a7142467c9",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "af7e19e9-522a-4480-bfa4-90742087440e",
+              "name": "Salary Date",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -8688,
+        -16
+      ],
+      "id": "59c83b1b-17c2-471e-a4fd-5685bdb4a6bb",
+      "name": "Rename"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "New Email Trigger": {
+      "main": [
+        [
+          {
+            "node": "Rename",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a7dbb259-f0a2-4f6f-b63c-409f77b3914e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "424bd5bafb623cfe45fa852cd88d1d0008e996fcab2c719d97be4b3d95864c39"
+  },
+  "id": "12hfc7h49O1D91FF",
+  "tags": []
+}

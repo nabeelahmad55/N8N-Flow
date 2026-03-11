@@ -1,0 +1,256 @@
+{
+  "name": "AI Agent Chatbot + sheet+ Gmail",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -528,
+        -160
+      ],
+      "id": "c9997573-bea5-42e3-853f-f3f1896f3a76",
+      "name": "When chat message received",
+      "webhookId": "cc168601-2932-4951-813b-02f7d07e7a78"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are my personal assistant. Your role is to help me stay organized, manage communications, and keep track of sponsorship inquiries.\n\nYou have access to three tools:\n1. Calendar – check my schedule and tell me what free time I have on specific days or upcoming events.\n2. Gmail (read-only) – read and summarize emails with sender, subject, key points, and deadlines. You cannot send, delete, or modify emails.\n3. Sponsor Inquiry Tracker (Google Sheet) – contains all sponsorship-related inquiries. Anytime I ask about sponsors, sponsorships, or inquiries, reference this sheet.\n\nBehavior guidelines:\n- Always be clear, concise, and professional.\n- If I ask something outside your tools, explain what you can do instead.\n- When I ask about availability, rely only on the calendar.\n- When I ask about sponsorships, rely only on the sponsor tracker.\n- When I ask about emails, summarize only from Gmail.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -352,
+        -160
+      ],
+      "id": "4736c50e-045b-4f61-990d-d8e0c77ccf02",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -576,
+        64
+      ],
+      "id": "5954d20c-088d-47c8-8830-af2766ec6af5",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "lrGQUQxgSRoGAqle",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -448,
+        160
+      ],
+      "id": "7f70e954-a0a4-4cab-b1e7-d8af2c50ac9c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        -192,
+        160
+      ],
+      "id": "29cb0479-a881-4087-bb4e-e9ec56265a96",
+      "name": "Read Email",
+      "webhookId": "e8f80ea9-7b26-482e-bc5d-f9e9a05323ab",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EKxcPmHolt5kCZOt",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "bilal.moazzam.ibex@gmail.com",
+          "mode": "list",
+          "cachedResultName": "bilal.moazzam.ibex@gmail.com"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        208
+      ],
+      "id": "527d8238-39a7-4488-8442-740e2c1c1ff6",
+      "name": "Check Calender",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "WcWV0ehD7Co368qk",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ZmRypXuZ8ztR44CTo80_ExTjWuC6Y1LlVAQjOpQJgB8",
+          "mode": "list",
+          "cachedResultName": "Sheet BM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZmRypXuZ8ztR44CTo80_ExTjWuC6Y1LlVAQjOpQJgB8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZmRypXuZ8ztR44CTo80_ExTjWuC6Y1LlVAQjOpQJgB8/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -64,
+        64
+      ],
+      "id": "64d47010-a23e-40a6-9e8a-b7386a2280e1",
+      "name": "Get row(s) in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "B0qBClMtmhKl4gXg",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Calender": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7ad8d4c8-3173-4966-a08e-37095c099639",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "424bd5bafb623cfe45fa852cd88d1d0008e996fcab2c719d97be4b3d95864c39"
+  },
+  "id": "CrsE1t5OdZeswkv8",
+  "tags": [
+    {
+      "createdAt": "2025-09-02T07:35:01.885Z",
+      "updatedAt": "2025-09-02T07:35:01.885Z",
+      "id": "KC8TmRFhyU1irnpd",
+      "name": "Gmail"
+    },
+    {
+      "createdAt": "2025-09-02T11:15:20.147Z",
+      "updatedAt": "2025-09-02T11:15:20.147Z",
+      "id": "YpM8kuoqUZLxfffY",
+      "name": "ai Agent"
+    },
+    {
+      "createdAt": "2025-09-02T11:15:12.868Z",
+      "updatedAt": "2025-09-02T11:15:12.868Z",
+      "id": "sqsMglVx4cnqXTaG",
+      "name": "sheet"
+    }
+  ]
+}

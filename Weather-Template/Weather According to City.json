@@ -1,0 +1,628 @@
+{
+  "name": "Weather According to City",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Select Location",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "What is your City?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Chicago"
+                  },
+                  {
+                    "option": "Lahore"
+                  },
+                  {
+                    "option": "Islamabad"
+                  },
+                  {
+                    "option": "Miami"
+                  },
+                  {
+                    "option": "Karachi"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        64,
+        144
+      ],
+      "id": "c1584ad7-2587-4404-896e-60b976b586dd",
+      "name": "On form submission",
+      "webhookId": "3f6b969b-b102-436f-a7cf-138390d54a6e"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json['What is your City?'] }}",
+                    "rightValue": "Chicago",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "9d81f315-b490-4a0e-b7dd-18d89e0e1cc0"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Chicago"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ecb77077-c559-4e4d-8e09-f45de979ae33",
+                    "leftValue": "={{ $json['What is your City?'] }}",
+                    "rightValue": "Lahore",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Lahore"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "80e97eac-c496-46a4-a473-8eb7da8d8625",
+                    "leftValue": "={{ $json['What is your City?'] }}",
+                    "rightValue": "Islamabad",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Islamabad"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8905b054-58b9-461b-afdc-6430ced7ff50",
+                    "leftValue": "={{ $json['What is your City?'] }}",
+                    "rightValue": "Miami",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Miami"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0c1aec48-c188-4473-a7ed-7105f763b02d",
+                    "leftValue": "={{ $json['What is your City?'] }}",
+                    "rightValue": "Karachi",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Karachi"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        256,
+        96
+      ],
+      "id": "f49f0d4b-91c1-4114-9654-389aedddb479",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.open-meteo.com/v1/forecast?latitude={{ $json.latitude }}&longitude={{ $json.longitude }}&hourly=temperature_2m",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        144
+      ],
+      "id": "61e3f70a-e24d-4557-a705-58ff21917738",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54684e5d-dde1-457b-a8b2-add9940fe01a",
+              "name": "latitude",
+              "value": "41.88",
+              "type": "string"
+            },
+            {
+              "id": "38abc342-a338-452e-bc5c-828cdd5bfa11",
+              "name": "longitude",
+              "value": "87.63",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        -176
+      ],
+      "id": "ccb7f473-3bca-4581-966a-49393d86f305",
+      "name": "Chicago locate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54684e5d-dde1-457b-a8b2-add9940fe01a",
+              "name": "latitude",
+              "value": "31.52",
+              "type": "string"
+            },
+            {
+              "id": "38abc342-a338-452e-bc5c-828cdd5bfa11",
+              "name": "longitude",
+              "value": "74.35",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        -16
+      ],
+      "id": "db19a1a2-9757-4dcf-811e-1a7c0d0c5167",
+      "name": "Lahore Locate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54684e5d-dde1-457b-a8b2-add9940fe01a",
+              "name": "latitude",
+              "value": "25.76",
+              "type": "string"
+            },
+            {
+              "id": "38abc342-a338-452e-bc5c-828cdd5bfa11",
+              "name": "longitude",
+              "value": "80.19",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        320
+      ],
+      "id": "ac7c812c-e428-453a-bca1-907ab95771bc",
+      "name": "Miami locate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54684e5d-dde1-457b-a8b2-add9940fe01a",
+              "name": "latitude",
+              "value": "33.69",
+              "type": "string"
+            },
+            {
+              "id": "38abc342-a338-452e-bc5c-828cdd5bfa11",
+              "name": "longitude",
+              "value": "73.03",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        144
+      ],
+      "id": "67b6a5f3-46df-409f-8ae6-23cca6464e2b",
+      "name": "Islamabad locate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54684e5d-dde1-457b-a8b2-add9940fe01a",
+              "name": "latitude",
+              "value": "24.86",
+              "type": "string"
+            },
+            {
+              "id": "38abc342-a338-452e-bc5c-828cdd5bfa11",
+              "name": "longitude",
+              "value": "67.00",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        496
+      ],
+      "id": "1a6d3d53-0229-40da-9e9b-0051ba5dc660",
+      "name": "Karachi locate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = items[0].json;\n\nconst times = data.hourly.time;\n\nconst temp = data.hourly.temperature_2m;\n\nconst today = new Date().toISOString().slice(0,10)\n\nconst todaysTemps = times.reduce((arr, t, i)=>{\n  if(t.startsWith(today)) arr.push(temp[i]);\n  return arr;\n}, []);\n\nconst high = Math.max(...todaysTemps);\nconst low = Math.min(...todaysTemps);\n\nreturn [{\n  json: {\n    highTemperature : high,\n    lowTemperature : low\n  }\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        144
+      ],
+      "id": "1a633955-c8a4-402b-98ea-28955555d086",
+      "name": "Find High & low"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appAiGHyPR47BDaVd",
+          "mode": "list",
+          "cachedResultName": "Weather data",
+          "cachedResultUrl": "https://airtable.com/appAiGHyPR47BDaVd"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblFd48W3HZIH3ITa",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appAiGHyPR47BDaVd/tblFd48W3HZIH3ITa"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Location": "={{ $('On form submission').item.json['What is your City?'] }}",
+            "High": "={{ $json.highTemperature }}",
+            "Low": "={{ $json.lowTemperature }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "High",
+              "displayName": "High",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Low",
+              "displayName": "Low",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created Time",
+              "displayName": "Created Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1168,
+        144
+      ],
+      "id": "a8782853-46d5-4231-9193-994dc8761bb9",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "GZ59TieTlfnk4OQ9",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Chicago locate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Lahore Locate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Islamabad locate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Miami locate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Karachi locate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chicago locate": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lahore Locate": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Islamabad locate": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Miami locate": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Karachi locate": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Find High & low",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find High & low": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "746ecb00-b8c5-4823-b1cc-5dd74e177702",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "424bd5bafb623cfe45fa852cd88d1d0008e996fcab2c719d97be4b3d95864c39"
+  },
+  "id": "1edq2j4HSivCIaWH",
+  "tags": [
+    {
+      "createdAt": "2025-09-02T10:00:20.224Z",
+      "updatedAt": "2025-09-02T10:00:20.224Z",
+      "id": "1A6I1JH28JMkqmyt",
+      "name": "weather"
+    },
+    {
+      "createdAt": "2025-09-02T10:00:27.889Z",
+      "updatedAt": "2025-09-02T10:00:27.889Z",
+      "id": "8nmDytLQFf9NoN4j",
+      "name": "Air Table"
+    },
+    {
+      "createdAt": "2025-09-02T10:00:57.851Z",
+      "updatedAt": "2025-09-02T10:00:57.851Z",
+      "id": "BN01wQSXmbRmZWSq",
+      "name": "form"
+    },
+    {
+      "createdAt": "2025-09-02T10:01:40.318Z",
+      "updatedAt": "2025-09-02T10:01:40.318Z",
+      "id": "MaI6xMspW8obFFRR",
+      "name": "temperature"
+    },
+    {
+      "createdAt": "2025-09-02T10:01:49.147Z",
+      "updatedAt": "2025-09-02T10:01:49.147Z",
+      "id": "Tz3Ntd6lY6Grwbss",
+      "name": "api call"
+    }
+  ]
+}
